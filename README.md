@@ -16,11 +16,11 @@ cd cub3d_cartographer
 ### Usage
 The script can be run from the command line with several options:
 
--**-w, --width**: Specify the width of the map (default is 20).
--**-ht, --height**: Specify the height of the map (default is 20).
--**-i, --iterations**: Specify the number of iterations for map generation (default is 500).
--**-p, --path**: Path to the directory with .xpm files for texture selection. This is a required argument.
--**-m, --mode**: Mode of operation. Can be 'map', 'texture', 'color', or 'all' (default is 'all').
+-**-w, --width**: Specify the width of the map (default is 20).  
+-**-ht, --height**: Specify the height of the map (default is 20).  
+-**-i, --iterations**: Specify the number of iterations for map generation (default is 500).  
+-**-p, --path**: Path to the directory with .xpm files for texture selection. This is a required argument.  
+-**-m, --mode**: Mode of operation. Can be 'map', 'texture', 'color', or 'all' (default is 'all').  
 
 Here's an example of how to use the script:
 
