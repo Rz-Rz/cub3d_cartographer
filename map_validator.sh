@@ -31,13 +31,8 @@ run_test() {
     local input_file="$2"
     local output_file="$3"
 
-    # Kill the program after 5 seconds
-    ( sleep 5; killall "$executable" ) &
-    local timer_pid=$!
-
     # Run the program with valgrind and pipe output to a file
-    valgrind --leak-check=full --error-exitcode=1 --log-file="$output_file" ./"$executable" "$input_file"
-    local exit_code=$?
+    timeout 5 valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 --log-file="$output_file" ./"$executable" "$input_file"
 
     # Kill the timer subprocess
     kill "$timer_pid" 2>/dev/null
@@ -50,6 +45,7 @@ run_test() {
 check_results() {
     local output_file="$1"
     local folder_type="$2"
+	local test_result="$3"
 
     # Check for the "Error" string
 	grep -rn "Error" "$output_file"
@@ -57,7 +53,6 @@ check_results() {
 
     # Check for valgrind issues
     local valgrind_errors=$(grep -oP "ERROR SUMMARY: \K\d+" "$output_file")
-    local valgrind_success=$((valgrind_errors == 0 ? 0 : 1))
 
     if [ "$folder_type" == "invalid_map" ]; then
         if [ $error_found -eq 1 ]; then
@@ -73,62 +68,17 @@ check_results() {
         fi
     fi
 
-    if [ $valgrind_success -eq 0 ]; then
-        print_colored green "Success: No valgrind issues"
-    else
+    if [ $test_result -eq 1 ]; then
         print_colored red "Failure: Valgrind issues detected"
+    else
+        print_colored green "Success: No valgrind issues"
     fi
 }
-# check_results() {
-#     local output_file="$1"
-#     local folder_type="$2"
-
-#     # Check for the "Error" string
-#     grep -iq "Error" "$output_file"
-#     local error_found=$?
-
-#     # Check for valgrind issues
-#     grep -q "ERROR SUMMARY: 0 errors" "$output_file"
-#     local valgrind_success=$?
-
-#     if [ "$folder_type" == "invalid_map" ]; then
-#         if [ $error_found -eq 0 ]; then
-#             print_colored green "Success: Error string found"
-#         else
-#             print_colored red "Failure: Error string not found"
-#         fi
-#     elif [ "$folder_type" == "valid_map" ]; then
-#         if [ $error_found -ne 0 ]; then
-#             print_colored green "Success: Error string not found"
-#         else
-#             print_colored red "Failure: Error string found"
-#         fi
-#     fi
-
-#     if [ $valgrind_success -eq 0 ]; then
-#         print_colored green "Success: No valgrind issues"
-#     else
-#         print_colored red "Failure: Valgrind issues detected"
-#     fi
-# }
-
 # Function to clean up generated files
 cleanup() {
     local output_file="$1"
     rm -f "$output_file"
 }
-
-# # Function to run the test executable without valgrind
-# run_test_no_valgrind() {
-#     local executable="$1"
-#     local input_file="$2"
-#     local output_file="$3"
-
-#     ./"$executable" "$input_file" > "$output_file" 2>&1
-#     local exit_code=$?
-
-#     return $exit_code
-# }
 
 # Function to run tests with a list of input files
 run_tests_with_files() {
@@ -147,7 +97,8 @@ run_tests_with_files() {
             echo
         fi
         run_test "$executable" "$input_file" "$output_file"
-        check_results "$output_file" "$folder_type"
+		local test_result=$?
+        check_results "$output_file" "$folder_type" "$test_result"
         cleanup "$output_file"
         echo
     done
